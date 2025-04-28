@@ -1,0 +1,14 @@
+# depslib dependency file v1.0
+1745828703 source:c:\users\home\desktop\c++\4 семестр\pat2\main.cpp
+	<stdio.h>
+	<stdlib.h>
+	<list>
+	"PatternTemplates1.h"
+	<iostream>
+	<stdio.h>
+	<stdlib.h>
+	<list>
+	"PatternTemplates1.h"
+
+1744307401 c:\users\home\desktop\c++\4 семестр\pat2\patterntemplates1.h
+
