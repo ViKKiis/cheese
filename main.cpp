@@ -6,9 +6,81 @@
 
 using namespace std;
 
+enum class CheeseType : int {
+    Mozzarella = 1,
+    Cheddar = 2,
+    Gorgonzola = 3,
+    Undefined = 0
+};
+
+class ServingStrategy {
+public:
+    virtual ~ServingStrategy() {}
+    virtual void Serve() = 0;
+};
+
+class WhiteWineServing : public ServingStrategy {
+public:
+    void Serve() override {
+        wcout << L"Сочетается с белым вином." << endl;
+    }
+};
+
+class RedWineServing : public ServingStrategy {
+public:
+    void Serve() override {
+        wcout << L"Сочетается с красным вином." << endl;
+    }
+};
+
+class DessertWineServing : public ServingStrategy {
+public:
+    void Serve() override {
+        wcout << L"Сочетается с десертным вином." << endl;
+    }
+};
+
+class EatingStrategy {
+public:
+    virtual ~EatingStrategy() {}
+    virtual void Eat() = 0;
+};
+
+class EnjoySlowlyEatingStrategy : public EatingStrategy {
+public:
+    void Eat() override {
+        wcout << L"Данный сыр лучше есть неспеша, наслаждаясь его нежным вкусом " << endl;
+    }
+};
+
+class ChewThoroughlyEatingStrategy : public EatingStrategy {
+public:
+    void Eat() override {
+        wcout << L"Сыр нужно тщательно разжевывать, чтобы ощутить его текстуру" << endl;
+    }
+};
+
+class SliceThinEatingStrategy : public EatingStrategy {
+public:
+    void Eat() override {
+        wcout << L"Тонко нарежьте сыр на кусочки и подайте на стол" << endl;
+    }
+};
+
+ServingStrategy* CreateServingStrategy(CheeseType cheeseType) {
+    switch (cheeseType) {
+        case CheeseType::Mozzarella: return new WhiteWineServing;
+        case CheeseType::Cheddar: return new RedWineServing;
+        case CheeseType::Gorgonzola: return new DessertWineServing;
+        default: return nullptr;
+    }
+}
+
 class Cheese {
 private:
     double Weight;
+    ServingStrategy* servingStrategy;  // подача,с каким вином сочетается
+    EatingStrategy* eatingStrategy;  // советы, как есть сыр
 
 protected:
     wstring Name;
@@ -18,17 +90,46 @@ protected:
 
 public:
     Cheese(const wstring& name, const wstring& origin, int age, double weight)
-        : Name(name), Origin(origin), Age(age), Weight(weight), IsTasty(false) {}
+        : Name(name), Origin(origin), Age(age), Weight(weight), IsTasty(false), servingStrategy(nullptr), eatingStrategy(nullptr) {}
 
-    virtual ~Cheese() {}
+    virtual ~Cheese() {
+        delete servingStrategy;
+        delete eatingStrategy;
+    }
+
+    void SetServingStrategy(ServingStrategy* strategy) {
+        servingStrategy = strategy;
+    }
+
+    void SetEatingStrategy(EatingStrategy* strategy) {
+        eatingStrategy = strategy;
+    }
 
     void Info() const {
         wcout << L"Сыр: " << Name << L", Происхождение: " << Origin
-            << L", Возраст: " << Age << L" месяцев" << L", Вес: " << Weight << L" кг" << endl;
+               << L", Возраст: " << Age << L" месяцев" << L", Вес: " << Weight << L" кг" << endl;
     }
 
     virtual void Taste() = 0;
-    virtual void Wine() = 0;
+
+    void Wine() {
+        if (servingStrategy) {
+            servingStrategy->Serve();
+        }
+    }
+
+    void Eat() {
+        if (eatingStrategy) {
+            eatingStrategy->Eat();
+        }
+    }
+
+    void ServeCheese() {
+        Info();
+        Taste();
+        Wine();
+        Eat();
+    }
 
     bool IsGood() const { return IsTasty; }
     void SetTasty(bool tasty) { IsTasty = tasty; }
@@ -39,51 +140,39 @@ public:
 
 class Mozzarella : public Cheese {
 public:
-    Mozzarella() : Cheese(L"Моцарелла", L"Италия", 7, 0.20) {}
-    ~Mozzarella() {}
+    Mozzarella() : Cheese(L"Моцарелла", L"Италия", 7, 0.20) {
+        SetServingStrategy(new WhiteWineServing());
+        SetEatingStrategy(new EnjoySlowlyEatingStrategy());
+    }
+
 
     void Taste() override {
         wcout << L"Моцарелла мягкая и сливочная." << endl;
-    }
-
-    void Wine() override {
-        wcout << L"Сочетается с белым вином." << endl;
     }
 };
 
 class Cheddar : public Cheese {
 public:
-    Cheddar() : Cheese(L"Чеддер", L"Англия", 12, 1.63) {}
-    ~Cheddar() {}
+    Cheddar() : Cheese(L"Чеддер", L"Англия", 12, 1.63) {
+        SetServingStrategy(new RedWineServing());
+        SetEatingStrategy(new ChewThoroughlyEatingStrategy());
+    }
 
     void Taste() override {
         wcout << L"Чеддер имеет острый и насыщенный вкус." << endl;
-    }
-
-    void Wine() override {
-        wcout << L"Сочетается с красным вином." << endl;
     }
 };
 
 class Gorgonzola : public Cheese {
 public:
-    Gorgonzola() : Cheese(L"Горгонзола", L"Италия", 2, 1.15) {}
-    ~Gorgonzola() {}
+    Gorgonzola() : Cheese(L"Горгонзола", L"Италия", 2, 1.15) {
+        SetServingStrategy(new DessertWineServing());
+        SetEatingStrategy(new SliceThinEatingStrategy());
+    }
 
     void Taste() override {
         wcout << L"Горгонзола обладает сильным и острым вкусом." << endl;
     }
-
-    void Wine() override {
-        wcout << L"Хорошо сочетается с десертным вином." << endl;
-    }
-};
-
-enum class CheeseType : int {
-    Mozzarella = 1,
-    Cheddar = 2,
-    Gorgonzola = 3,
-    Undefined = 0
 };
 
 Cheese* CreateCheese(CheeseType type) {
@@ -99,6 +188,7 @@ void CheeseEmAll(Iterator<Cheese*>* it) {
         currentCheese->Info();
         currentCheese->Taste();
         currentCheese->Wine();
+        currentCheese->Eat();
     }
 }
 
@@ -168,16 +258,17 @@ public:
 int main() {
     setlocale(LC_ALL, "");
 
-    wcout << L"Какой сыр создать (1 - Mozzarella, 2 - Cheddar, 3 - Gorgonzola)?" << endl;
+
+    wcout << L"Какой сыр создать (1 - Mozzarella, 2 - Cheddar, 3 - Gorgonzola)? ";
     CheeseType type = CheeseType::Undefined;
     int ii;
     cin >> ii;
-    type = static_cast<CheeseType>(ii);
 
+    type = static_cast<CheeseType>(ii);
     Cheese* newCheese = CreateCheese(type);
-    newCheese->Info();
-    newCheese->Taste();
-    newCheese->Wine();
+
+    newCheese->ServeCheese();
+
     delete newCheese;
 
     size_t N = 0;
@@ -194,7 +285,6 @@ int main() {
     }
 
     wcout << L"Размер стека сыров: " << cheeseStack.Size() << endl;
-
     Iterator<Cheese*>* it2 = cheeseStack.GetIterator();
     CheeseEmAll(it2);
     delete it2;
@@ -210,7 +300,6 @@ int main() {
     }
 
     wcout << L"Размер массива сыров: " << cheeseArray.Size() << endl;
-
     Iterator<Cheese*>* it3 = cheeseArray.GetIterator();
     cout << "_____" << endl;
 
@@ -233,23 +322,6 @@ int main() {
     CheeseEmAll(ageIt);
     delete ageIt;
     delete it5;
-
-    std::list<Cheese*> cheeseList;
-    for (size_t i = 0; i < N; i++) {
-        int cheese_num = rand() % 3 + 1;
-        CheeseType cheese_type = static_cast<CheeseType>(cheese_num);
-        Cheese* newCheese = CreateCheese(cheese_type);
-        cheeseList.push_back(newCheese);
-    }
-
-    wcout << L"Размер списка сыров (list): " << cheeseList.size() << endl;
-
-    Iterator<Cheese*>* adaptedIt = new ConstIteratorAdapter<std::list<Cheese*>, Cheese*>(&cheeseList);
-    Iterator<Cheese*>* filteredIt = new CheeseOriginDecorator(adaptedIt, L"Италия");
-
-    CheeseEmAll(filteredIt);
-
-    delete filteredIt;
 
     return 0;
 }
